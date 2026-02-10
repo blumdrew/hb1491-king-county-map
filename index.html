@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<!-- https://docs.mapbox.com/mapbox-gl-js/example/updating-choropleth/ -->
+<html>
+
+<head>
+    <meta name="viewport" content="user-scalable = yes">
+    <title>King County TOD Areas</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js"></script>
+</head>
+
+<body>
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+    
+    
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    #map {
+        position: absolute;
+        top: 50px;
+        bottom: 0px;
+        width: 100%;
+    }
+
+    h3 {
+        font-size: 16px;
+        font-family: 'Roboto';
+    }
+
+    h2 {
+        font-size: 24px;
+        font-family: 'Roboto';
+    }
+    h4 {
+        font-size: 14px;
+        font-family: 'Roboto';
+    }
+    h5 {
+        font-size: 8px;
+        font-family: 'Roboto';
+    }
+
+    .map-title {
+        font-family: 'Roboto';
+        position: relative;
+        text-align: center;
+        font-size: 12px;
+    }
+    .legend {
+        font-family: 'Roboto';
+        position: fixed;
+        border-radius: 10px;
+        bottom: 55px;
+        left: 10px;
+        margin: 10px; 
+        width: 375px;
+        background-color: #fff;
+        padding: 10px 10px;
+        z-index: 1002;
+        opacity: 1;
+    }
+    .data-selector {
+        font-family: 'Roboto';
+        position: fixed;
+        border-radius: 10px;
+        top: 90px;
+        right: 10px;
+        margin: 10px; 
+        width: 120px;
+        height: 320px;
+        background-color: #fff;
+        padding: 10px 10px;
+        z-index: 1002;
+        opacity: 1;
+    }
+    .drop-down-menu{
+        font-family: 'Roboto';
+        font-size: 12px;
+        width: 100px;
+    }
+
+    .legend-box{
+        float: left;
+        height: 20px;
+        width: 20px;
+        margin-bottom: 15px;
+        border: 1px solid black;
+        clear: both;
+    }
+    .legend-dot{
+        float: left;
+        height: 10px;
+        width: 10px;
+        margin-bottom: 5px;
+        background-color: #223b53;
+        border: 1px solid white;
+        clear: both;
+        border-radius: 50%;
+    }
+    .c1 {
+        background-color: #d95f0e;
+    }
+
+    .c2 {
+        background-color: #fec44f;
+    }
+
+    .c3 {
+        background-color: #fff7bc;
+    }
+
+        .row {
+        height: 12px;
+        width: 100%;
+    }
+
+    .colors {
+        background: linear-gradient(to right,
+            #762a83,
+            #af8dc3,
+            #e7d4e8,
+            #f7f7f7,
+            #d9f0d3,
+            #7fbf7b,
+            #1b7837);
+        margin-bottom: 5px;
+    }
+
+    .label {
+        width: 30%;
+        display: inline-block;
+        text-align: center;
+        font-family: 'Roboto';
+    }
+     .column {
+        float: left;
+        width: 33%;
+    }
+
+    /* Clear floats after the columns */
+    .row:after {
+        content: "";
+        display: table;
+        clear: both;
+    }
+
+    .full_screen {
+        font-family: 'Roboto';
+        position: fixed;
+        border-radius: 10px;
+        bottom: 12px;
+        right: 10px;
+        margin: 10px;
+        /*        width: 120px;*/
+        background-color: #fff;
+        padding: 10px 10px;
+        z-index: 1002;
+    }
+
+    </style>
+    <!-- Load the `mapbox-gl-geocoder` plugin. -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
+    <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" type="text/css">
+    <div id="map-title" class="map-title"><h1>King County TOD Areas</h1></div>
+    <div id="map-legend" class="legend">
+        <div id="legend-title" class="h2"><b>Legend</b></div>
+        <hr>
+        <div class="row">
+            <div class="column">
+                <div id="data-selection">
+                    <label for="line-type">Select a transit line:</label>
+                    <select name="line-select" id="line-select" class="drop-down-menu">
+                        <option value="All">All</option>
+                        <option value="Link 1">Link 1 Line</option>
+                        <option value="Link 2">Link 2 Line</option>
+                        <option value="Rapid Ride A">Rapid Ride A</option>
+                        <option value="Rapid Ride B">Rapid Ride B</option>
+                        <option value="Rapid Ride C">Rapid Ride C</option>
+                        <option value="Rapid Ride D">Rapid Ride D</option>
+                        <option value="Rapid Ride E">Rapid Ride E</option>
+                        <option value="Rapid Ride F">Rapid Ride F</option>
+                        <option value="Rapid Ride G">Rapid Ride G</option>
+                        <option value="Rapid Ride H">Rapid Ride H</option>
+                        <option value="Rapid Ride I">Rapid Ride I</option>
+                        <option value="Rapid Ride J">Rapid Ride J</option>
+                        <option value="Rapid Ride K">Rapid Ride K</option>
+                        <option value="SLU Streetcar">SLU Streetcar</option>
+                        <option value="FH Streetcar">First Hill Streetcar</option>
+                        <option value="Sounder">Sounder</option>
+                    </select>
+                </div>
+            </div>
+            <div class="column">
+                <div id="data-selection-buffer-type">
+                    <label for="buffer-type">Select buffer type:</label>
+                    <select name="buffer-select" id="buffer-select" class="drop-down-menu">
+                        <option value="Simple">Simple</option>
+                        <option value="Walk">Walking Distance</option>
+                        <option value="All">Both</option>
+                    </select>
+                </div>
+            </div>
+            <div class="column">
+                <div id="stop-display">
+                    <input type="checkbox" id="show-stops" name="stops" value="show-stops">
+                    <label for="stops">Show stop entrances <i>(white dots)</i></label>
+                </div> 
+            </div>
+        </div>
+    </div>
+    <div id="map"></div>
+    <pre id="coordinates" class="coordinates"></pre>
+    <!-- Initialize Map -->
+    <script>
+
+    
+	mapboxgl.accessToken = 'pk.eyJ1IjoiYmx1bWRyZXciLCJhIjoiY203bnZqcmc1MDU3czJtcHVtOWtuejg3cyJ9.BtyyyhiVLkUXZJP06fW7Aw';
+
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/dark-v11',
+        center: [-122.28, 47.55],
+        minZoom: 9,
+        zoom: 12,
+        attributionControl: false
+    });
+    const canvas = map.getCanvasContainer();
+
+    map.on('load',() => {
+        // Make pointer default
+        map.getCanvas().style.cursor = 'default';
+
+        // add tilesets
+        map.addSource('hb_1491_data', {
+            'type': 'vector',
+            'url': 'mapbox://blumdrew.hb1491_buffers_v3' // change as needed
+        });
+
+        map.addLayer({
+                'id': 'hb-1491',
+                'source': 'hb_1491_data',
+                'source-layer': 'hb_1491', //change as needed
+                'type': 'fill',
+                'filter':['all',
+                    ['==',['get','line'],'All'],
+                    ['==',['get','type'],'Simple']
+                ],
+                layout: {
+                    visibility: 'visible'
+                },
+                paint: {
+                    'fill-color':"#ff7f7f",
+                    'fill-opacity':0.33
+                }
+            },
+            'continent-label' // Add layer below labels
+        );
+        map.addLayer({
+                'id':'hb-1491-outline',
+                'source':'hb_1491_data',
+                'source-layer': 'hb_1491',
+                'type':'line',
+                'filter':['all',
+                    ['==',['get','line'],'All'],
+                    ['==',['get','type'],'Simple']
+                ],
+                layout: {
+                    visibility: 'visible'
+                },
+                'paint':{'line-color':"#ffffff"}
+            },
+            'continent-label' // Add layer below labels
+        );
+        map.addLayer({
+                'id':'hb-1491-points',
+                'source':'hb_1491_data',
+                'source-layer': 'hb_1491',
+                'type':'circle',
+                'filter':['all',
+                    ['==',['get','type'],'Points']
+                ],
+                layout: {
+                    visibility: 'visible'
+                },
+                'paint':{
+                    'circle-radius': 3,
+                    'circle-color': '#ffffff'
+                }
+            },
+            'continent-label' // Add layer below labels
+        );
+    })
+
+    
+    map.on("idle", () =>{
+        var currentSelectionLine = document.getElementById('line-select').value;
+        var currentSelectionType= document.getElementById('buffer-select').value;
+        var currentStopValue = document.getElementById('show-stops').checked;
+        console.log(currentSelectionType);
+        // set filters for polygons
+        if (currentSelectionType != 'All') {
+            map.setFilter('hb-1491', ['all',['==',['get','line'],currentSelectionLine],['==',['get','type'],currentSelectionType]]);
+            map.setFilter('hb-1491-outline', ['all',['==',['get','line'],currentSelectionLine],['==',['get','type'],currentSelectionType]]);
+        } else {
+            map.setFilter('hb-1491', ['all',['==',['get','line'],currentSelectionLine]]);
+            map.setFilter('hb-1491-outline', ['all',['==',['get','line'],currentSelectionLine]]);
+        }
+
+        if (currentStopValue) {
+            map.setLayoutProperty('hb-1491-points', 'visibility', 'visible');
+            if (currentSelectionLine == 'All') {
+                map.setFilter('hb-1491-points',['all',['==',['get','type'],'Points']]);
+            } else {
+                map.setFilter('hb-1491-points',['all',['==',['get','type'],'Points'],['==',['get','line'],currentSelectionLine]]);
+            }
+        } else {
+            map.setLayoutProperty('hb-1491-points', 'visibility', 'none');
+        }
+    })
+    // Add a scale control to the map
+    map.addControl(new mapboxgl.ScaleControl());
+    map.addControl(new mapboxgl.AttributionControl({
+        customAttribution: 'Map: <a href=https://city-hikes.com/>Andrew Lindstrom<a> | Sources: Sound Transit, King County Metro Transit, Google'
+    }));
+    
+</script>
+
+</body>
+</html>
